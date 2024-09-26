@@ -306,23 +306,38 @@ public class ArtifactController implements ResourceController<Artifact> {
     }
 
     private ArtifactMetaData createArtifact(ArtifactSpec spec, byte[] content, IfExists ifExists) {
-        List<ArtifactReference> references = toRegistryReferences(spec.getReferences());
+        List<ArtifactReference> references = toRegistryReferences(
+                ensureAllReferencesHaveVersions(spec.getReferences()));
         return registryClient.createArtifact(spec.getGroupId(), spec.getArtifactId(), spec.getVersion(),
                 spec.getType(), ifExists, false, spec.getName(), spec.getDescription(), null, null, null,
                 new ByteArrayInputStream(content), references);
     }
 
     private ArtifactMetaData updateArtifact(ArtifactSpec spec, byte[] content) {
-        List<ArtifactReference> references = toRegistryReferences(spec.getReferences());
+        List<ArtifactReference> references = toRegistryReferences(
+                ensureAllReferencesHaveVersions(spec.getReferences()));
         return registryClient.updateArtifact(spec.getGroupId(), spec.getArtifactId(), spec.getVersion(), null,
                 null, new ByteArrayInputStream(content), references);
     }
 
     private VersionMetaData getArtifactVersionMetaDataByContent(ArtifactSpec spec, byte[] content) {
-        List<ArtifactReference> references = toRegistryReferences(spec.getReferences());
+        List<ArtifactReference> references = toRegistryReferences(
+                ensureAllReferencesHaveVersions(spec.getReferences()));
 
         return registryClient.getArtifactVersionMetaDataByContent(spec.getGroupId(), spec.getArtifactId(),
                 false, ArtifactContent.builder().content(new String(content)).references(references).build());
+    }
+
+    private List<io.apicurio.sync.api.ArtifactReference> ensureAllReferencesHaveVersions(
+            List<io.apicurio.sync.api.ArtifactReference> references) {
+        references.stream().forEach((reference) -> {
+            if (reference.getVersion() == null || reference.getVersion().isEmpty()) {
+                String version = registryClient.getArtifactMetaData(reference.getGroupId(),
+                        reference.getArtifactId()).getVersion();
+                reference.setVersion(version);
+            }
+        });
+        return references;
     }
 
 

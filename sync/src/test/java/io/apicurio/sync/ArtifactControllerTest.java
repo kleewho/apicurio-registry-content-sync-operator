@@ -173,7 +173,6 @@ public class ArtifactControllerTest {
                                 .withName(phoneNumberId)
                                 .withArtifactId(phoneNumberId)
                                 .withGroupId(groupId)
-                                .withVersion(phoneNumberProtoArtifact.getSpec().getVersion())
                                 .build())
                         .build())
                 .build();
